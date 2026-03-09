@@ -1,0 +1,97 @@
+name: Build Satlync Node Installer
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: installer/package-lock.json
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            rpm \
+            fakeroot \
+            dpkg \
+            libgtk-3-0 \
+            libnotify4 \
+            libnss3 \
+            libxss1 \
+            libxtst6 \
+            xdg-utils \
+            libatspi2.0-0 \
+            libdrm2 \
+            libgbm1 \
+            libxcb-dri3-0
+
+      - name: Install installer dependencies
+        working-directory: installer
+        run: npm ci
+
+      - name: Build .deb and AppImage
+        working-directory: installer
+        run: npm run build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: List build output
+        run: |
+          echo "=== Build output ==="
+          ls -lh installer/dist/ || echo "No dist folder found"
+          find installer/dist -name "*.deb" -o -name "*.AppImage" 2>/dev/null || echo "No installer files found"
+
+      - name: Upload .deb as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: satlync-deb
+          path: installer/dist/*.deb
+          if-no-files-found: warn
+
+      - name: Upload AppImage as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: satlync-appimage
+          path: installer/dist/*.AppImage
+          if-no-files-found: warn
+
+      - name: Create GitHub Release and upload installers
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Satlync Node ${{ github.ref_name }}
+          body: |
+            ## Satlync Node Installer ${{ github.ref_name }}
+
+            ### Download
+            - **SatlyncNode.deb** — Ubuntu 20.04, 22.04, 24.04 (recommended)
+            - **SatlyncNode.AppImage** — Any Linux distro, no install needed
+
+            ### Install Instructions (Ubuntu)
+            1. Download `satlync-node_1.0.0_amd64.deb`
+            2. Double-click it — Ubuntu Software Center opens
+            3. Click **Install**
+            4. Browser opens at `http://localhost:3456` with your activation code
+            5. Enter the code at https://www.dcitsolutionsmedia.co.za/page-3/
+          files: |
+            installer/dist/*.deb
+            installer/dist/*.AppImage
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

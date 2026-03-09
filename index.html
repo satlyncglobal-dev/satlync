@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Satlync Node Installer</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:#03060c;color:#c8ddf0;font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;overflow:hidden;user-select:none;}
+.titlebar{height:36px;background:#03060c;border-bottom:1px solid #122030;display:flex;align-items:center;justify-content:space-between;padding:0 16px;-webkit-app-region:drag;}
+.tbrand{font-size:13px;font-weight:700;color:#fff;letter-spacing:-0.5px;}
+.tbrand em{color:#00d4ff;font-style:normal;}
+.tclose{width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:#6b9ab8;cursor:pointer;font-size:16px;-webkit-app-region:no-drag;transition:all 0.2s;display:flex;align-items:center;justify-content:center;}
+.tclose:hover{background:rgba(255,107,53,0.15);color:#ff6b35;}
+.app{height:calc(100% - 36px);display:flex;flex-direction:column;}
+.screen{display:none;flex-direction:column;height:100%;padding:32px 40px;}
+.screen.active{display:flex;}
+/* Welcome */
+.wicon{font-size:56px;margin-bottom:20px;}
+.wtitle{font-size:28px;font-weight:800;color:#fff;letter-spacing:-1px;margin-bottom:8px;font-family:'Segoe UI',sans-serif;}
+.wsub{font-size:14px;color:#8ab8d4;margin-bottom:28px;line-height:1.7;}
+.wfeats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:32px;}
+.wf{display:flex;align-items:center;gap:8px;font-size:12px;color:#c8ddf0;padding:8px 10px;background:#0a1628;border:1px solid #122030;border-radius:6px;}
+.wf::before{content:'✓';color:#00ff88;font-weight:700;}
+.spacer{flex:1;}
+.btn-row{display:flex;gap:10px;justify-content:flex-end;}
+.btn-p{padding:10px 28px;border-radius:8px;border:1px solid rgba(0,212,255,0.5);background:rgba(0,212,255,0.12);color:#00d4ff;font-size:12px;font-weight:600;letter-spacing:1px;cursor:pointer;transition:all 0.2s;}
+.btn-p:hover{background:rgba(0,212,255,0.22);}
+.btn-p:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-s{padding:10px 28px;border-radius:8px;border:1px solid #1a3050;background:transparent;color:#8ab8d4;font-size:12px;cursor:pointer;transition:all 0.2s;}
+.btn-s:hover{color:#c8ddf0;border-color:#3a6080;}
+/* Check */
+.ctitle{font-size:20px;font-weight:700;color:#fff;margin-bottom:20px;}
+.checks{display:flex;flex-direction:column;gap:10px;margin-bottom:24px;}
+.ck{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#0a1628;border:1px solid #122030;border-radius:8px;}
+.cki{font-size:18px;width:24px;text-align:center;}
+.ckt{flex:1;}
+.ckn{color:#fff;font-size:13px;font-weight:600;}
+.ckd{font-size:11px;color:#6b9ab8;margin-top:2px;}
+.ck.ok{border-color:rgba(0,255,136,0.3);}
+.ck.fail{border-color:rgba(255,107,53,0.3);}
+.ck.ok .cki::after{content:'✓';}
+.ck.fail .cki::after{content:'✗';color:#ff6b35;}
+.warn-box{padding:12px 16px;background:rgba(255,204,0,0.06);border:1px solid rgba(255,204,0,0.25);border-radius:8px;font-size:12px;color:#ffcc00;margin-bottom:16px;}
+/* Interface select */
+.ititle{font-size:20px;font-weight:700;color:#fff;margin-bottom:6px;}
+.isub{font-size:13px;color:#8ab8d4;margin-bottom:20px;}
+.ifaces{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;overflow-y:auto;max-height:260px;}
+.iface{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#0a1628;border:2px solid #122030;border-radius:8px;cursor:pointer;transition:all 0.2s;}
+.iface.sel{border-color:rgba(0,212,255,0.5);background:rgba(0,212,255,0.06);}
+.iface-icon{font-size:20px;}
+.iface-name{font-size:13px;font-weight:600;color:#fff;}
+.iface-type{font-size:11px;color:#6b9ab8;}
+.iface-ip{font-size:11px;color:#2a4060;font-family:monospace;margin-left:auto;}
+.chk{width:18px;height:18px;border-radius:4px;border:2px solid #1a3050;margin-left:8px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.iface.sel .chk{background:#00d4ff;border-color:#00d4ff;color:#03060c;font-size:12px;}
+/* Installing */
+.inst-icon{font-size:48px;margin-bottom:16px;animation:spin 3s linear infinite;}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.inst-title{font-size:20px;font-weight:700;color:#fff;margin-bottom:6px;}
+.inst-sub{font-size:13px;color:#8ab8d4;margin-bottom:24px;}
+.steps{display:flex;flex-direction:column;gap:8px;}
+.step{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#0a1628;border:1px solid #122030;border-radius:8px;transition:all 0.3s;}
+.step.done{border-color:rgba(0,255,136,0.3);}
+.step.active{border-color:rgba(0,212,255,0.4);background:rgba(0,212,255,0.05);}
+.step-i{width:20px;text-align:center;font-size:13px;}
+.step-t{font-size:12px;color:#c8ddf0;}
+.step.done .step-t{color:#00ff88;}
+/* Success */
+.suc-icon{font-size:56px;margin-bottom:16px;}
+.suc-title{font-size:26px;font-weight:800;color:#00ff88;letter-spacing:-1px;margin-bottom:8px;}
+.suc-sub{font-size:14px;color:#8ab8d4;margin-bottom:24px;line-height:1.7;}
+.code-box{background:#03060c;border:1px solid rgba(0,212,255,0.3);border-radius:10px;padding:16px 20px;margin-bottom:20px;text-align:center;}
+.code-lbl{font-size:10px;color:#6b9ab8;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;}
+.code-val{font-family:monospace;font-size:28px;font-weight:700;color:#00d4ff;letter-spacing:6px;}
+.suc-btns{display:flex;flex-direction:column;gap:8px;}
+.btn-g{padding:12px 28px;border-radius:8px;border:1px solid rgba(0,255,136,0.5);background:rgba(0,255,136,0.1);color:#00ff88;font-size:12px;font-weight:600;letter-spacing:1px;cursor:pointer;transition:all 0.2s;text-align:center;}
+.btn-g:hover{background:rgba(0,255,136,0.2);}
+</style>
+</head>
+<body>
+
+<div class="titlebar">
+  <div class="tbrand">SAT<em>LYNC</em> Node Installer</div>
+  <button class="tclose" onclick="window.satlync.quit()">✕</button>
+</div>
+
+<div class="app">
+
+<!-- SCREEN 1: WELCOME -->
+<div class="screen active" id="s-welcome">
+  <div class="wicon">⬡</div>
+  <div class="wtitle">Welcome to SatlyncNode</div>
+  <p class="wsub">This installer sets up the Satlync bonding daemon on your Ubuntu machine. It runs silently in the background, bonds your network links, and opens your dashboard automatically.</p>
+  <div class="wfeats">
+    <div class="wf">Starlink + LTE + VSAT + Fibre</div>
+    <div class="wf">Never-Drop Packet Engine</div>
+    <div class="wf">SDIP 10.73.x.x Stable Overlay</div>
+    <div class="wf">4-Class QoS Traffic Shaping</div>
+    <div class="wf">ZeroTier Mesh Networking</div>
+    <div class="wf">Auto-updates every 6 hours</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="btn-row">
+    <button class="btn-s" onclick="window.satlync.quit()">Cancel</button>
+    <button class="btn-p" onclick="goCheck()">Next →</button>
+  </div>
+</div>
+
+<!-- SCREEN 2: SYSTEM CHECK -->
+<div class="screen" id="s-check">
+  <div class="ctitle">System Check</div>
+  <div class="checks" id="checks-list"></div>
+  <div class="warn-box" id="warn-box" style="display:none"></div>
+  <div class="spacer"></div>
+  <div class="btn-row">
+    <button class="btn-s" onclick="showScreen('s-welcome')">← Back</button>
+    <button class="btn-p" id="btn-check-next" disabled onclick="goInterfaces()">Next →</button>
+  </div>
+</div>
+
+<!-- SCREEN 3: INTERFACE SELECT -->
+<div class="screen" id="s-iface">
+  <div class="ititle">Select Network Links to Bond</div>
+  <p class="isub">Choose which interfaces Satlync should manage. You can toggle any link on or off later from your dashboard.</p>
+  <div class="ifaces" id="iface-list"></div>
+  <div class="spacer"></div>
+  <div class="btn-row">
+    <button class="btn-s" onclick="showScreen('s-check')">← Back</button>
+    <button class="btn-p" id="btn-iface-next" disabled onclick="startInstall()">Install →</button>
+  </div>
+</div>
+
+<!-- SCREEN 4: INSTALLING -->
+<div class="screen" id="s-install" style="text-align:center;align-items:center;justify-content:center;">
+  <div class="inst-icon">⬡</div>
+  <div class="inst-title">Installing Satlync Node</div>
+  <p class="inst-sub" style="max-width:400px">This takes about 90 seconds. Do not close this window.</p>
+  <div class="steps" style="width:100%;max-width:420px">
+    <div class="step" id="step1"><div class="step-i">○</div><div class="step-t">Installing Node.js 20</div></div>
+    <div class="step" id="step2"><div class="step-i">○</div><div class="step-t">Installing ZeroTier</div></div>
+    <div class="step" id="step3"><div class="step-i">○</div><div class="step-t">Configuring bonding daemon</div></div>
+    <div class="step" id="step4"><div class="step-i">○</div><div class="step-t">Starting Satlync service</div></div>
+    <div class="step" id="step5"><div class="step-i">○</div><div class="step-t">Generating activation code</div></div>
+  </div>
+</div>
+
+<!-- SCREEN 5: SUCCESS -->
+<div class="screen" id="s-success" style="align-items:center;text-align:center;">
+  <div class="suc-icon">✓</div>
+  <div class="suc-title">Satlync is Running!</div>
+  <p class="suc-sub">Your node is installed and active. Enter your activation code<br>on the Satlync website to connect your node to your account.</p>
+  <div class="code-box">
+    <div class="code-lbl">Your Activation Code</div>
+    <div class="code-val" id="act-code">SLNK-????</div>
+  </div>
+  <div class="suc-btns" style="width:100%;max-width:360px">
+    <button class="btn-g" onclick="openActivate()">→ Activate on Satlync Website</button>
+    <button class="btn-p" onclick="openLocal()">Open Local Dashboard (localhost:3456)</button>
+    <button class="btn-s" onclick="window.satlync.quit()">Close Installer</button>
+  </div>
+</div>
+
+</div><!-- .app -->
+
+<script>
+const API = 'https://432b9c4f-5fca-46c5-b93e-2aed5a2be436-00-umx4k3ul4rnm.janeway.replit.dev';
+let selectedIfaces = [];
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+async function goCheck() {
+  showScreen('s-check');
+  const list = document.getElementById('checks-list');
+  list.innerHTML = '<div style="color:#6b9ab8;padding:20px;text-align:center">Checking system...</div>';
+  const r = await window.satlync.systemCheck();
+  const checks = [
+    { label: 'Ubuntu Linux', detail: r.ubuntu ? `Ubuntu ${r.version} detected` : 'Ubuntu not detected — other distros may work', ok: r.ubuntu },
+    { label: 'Ubuntu Version', detail: r.supported ? `${r.version} — fully supported` : `${r.version} — may work but not officially tested`, ok: r.supported },
+    { label: 'Memory', detail: `${r.memoryGB}GB RAM — ${r.memory ? 'sufficient' : 'low, may be slow'}`, ok: r.memory },
+    { label: '64-bit Architecture', detail: r.arch ? 'x86_64 — compatible' : 'ARM/other — not supported', ok: r.arch }
+  ];
+  list.innerHTML = '';
+  let allOk = true;
+  for (const c of checks) {
+    if (!c.ok) allOk = false;
+    list.innerHTML += `<div class="ck ${c.ok?'ok':'fail'}">
+      <div class="cki" style="color:${c.ok?'#00ff88':'#ff6b35'}">${c.ok?'✓':'✗'}</div>
+      <div class="ckt"><div class="ckn">${c.label}</div><div class="ckd">${c.detail}</div></div>
+    </div>`;
+  }
+  const warn = document.getElementById('warn-box');
+  if (!r.ubuntu || !r.arch) {
+    warn.style.display = 'block';
+    warn.textContent = 'Warning: Your system may not be fully compatible. Installation may fail.';
+  } else {
+    warn.style.display = 'none';
+  }
+  document.getElementById('btn-check-next').disabled = !r.arch;
+}
+
+async function goInterfaces() {
+  showScreen('s-iface');
+  const list = document.getElementById('iface-list');
+  list.innerHTML = '<div style="color:#6b9ab8;padding:20px;text-align:center">Detecting interfaces...</div>';
+  const ifaces = await window.satlync.getInterfaces();
+  if (!ifaces.length) {
+    list.innerHTML = '<div style="color:#ff6b35;padding:16px">No network interfaces found. Check your connections.</div>';
+    return;
+  }
+  selectedIfaces = [];
+  list.innerHTML = '';
+  for (const iface of ifaces) {
+    const div = document.createElement('div');
+    div.className = 'iface';
+    div.dataset.name = iface.name;
+    div.innerHTML = `<div class="iface-icon">${iface.icon}</div>
+      <div><div class="iface-name">${iface.name}</div><div class="iface-type">${iface.type}</div></div>
+      <div class="iface-ip">${iface.ip || 'No IP'}</div>
+      <div class="chk"></div>`;
+    div.addEventListener('click', () => {
+      div.classList.toggle('sel');
+      const n = iface.name;
+      if (div.classList.contains('sel')) {
+        div.querySelector('.chk').textContent = '✓';
+        if (!selectedIfaces.includes(n)) selectedIfaces.push(n);
+      } else {
+        div.querySelector('.chk').textContent = '';
+        selectedIfaces = selectedIfaces.filter(x => x !== n);
+      }
+      document.getElementById('btn-iface-next').disabled = selectedIfaces.length === 0;
+    });
+    list.appendChild(div);
+  }
+}
+
+async function startInstall() {
+  showScreen('s-install');
+  const steps = ['step1','step2','step3','step4','step5'];
+  const labels = ['Installing Node.js 20','Installing ZeroTier','Configuring bonding daemon','Starting Satlync service','Generating activation code'];
+  function setStep(i, state) {
+    const el = document.getElementById(steps[i]);
+    el.className = 'step ' + state;
+    el.querySelector('.step-i').textContent = state === 'done' ? '✓' : state === 'active' ? '⬡' : '○';
+    if (state === 'done') el.querySelector('.step-t').style.color = '#00ff88';
+  }
+  setStep(0, 'active');
+  const result = await window.satlync.runInstall({ interfaces: selectedIfaces });
+  if (!result.success) {
+    document.querySelector('.inst-title').textContent = 'Installation Failed';
+    document.querySelector('.inst-sub').textContent = result.error || 'Unknown error. Please try again.';
+    document.querySelector('.inst-sub').style.color = '#ff6b35';
+    return;
+  }
+  for (let i = 0; i < steps.length; i++) {
+    setStep(i, 'active');
+    await new Promise(r => setTimeout(r, 800));
+    setStep(i, 'done');
+  }
+  await new Promise(r => setTimeout(r, 800));
+  let code = null, attempts = 0;
+  while (!code && attempts < 15) {
+    const res = await window.satlync.getActivationCode();
+    if (res.code) { code = res.code; break; }
+    await new Promise(r => setTimeout(r, 2000));
+    attempts++;
+  }
+  document.getElementById('act-code').textContent = code || 'Check localhost:3456';
+  showScreen('s-success');
+}
+
+function openActivate() {
+  const code = document.getElementById('act-code').textContent;
+  window.satlync.openUrl(`https://www.dcitsolutionsmedia.co.za/page-3/?code=${encodeURIComponent(code)}`);
+}
+function openLocal() {
+  window.satlync.openUrl('http://localhost:3456');
+}
+</script>
+</body>
+</html>
