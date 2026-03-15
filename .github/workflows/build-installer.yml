@@ -1,0 +1,36 @@
+name: Build Satlync Node Installer
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm fakeroot dpkg libgtk-3-0 libnss3 libxss1 libxtst6 xdg-utils libatspi2.0-0 libdrm2 libgbm1
+      - name: Install dependencies
+        working-directory: installer
+        run: npm install
+      - name: Build installers
+        working-directory: installer
+        run: npm run build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: satlync-deb
+          path: installer/dist/*.deb
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: satlync-appimage
+          path: installer/dist/*.AppImage
